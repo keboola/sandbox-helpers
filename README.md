@@ -1,2 +1,2 @@
-# sandbox-helpers
-some common functionality used by keboola sandboxes
+# sandboxes-notebook-utils
+some common functionality used by keboola sandbox notebooks

@@ -1,10 +1,10 @@
 from distutils.core import setup
 
 setup(
-    name='keboola-sandbox-helpers',
+    name='keboola-sandboxes-notebook-utils',
     version='1.0',
-    url='https://github.com/keboola/sandbox-helpers',
-    packages=['keboola_sandbox_helpers'],
-    package_dir={'keboola_sandbox_helpers': ''},
+    url='https://github.com/keboola/sandboxes-notebook-utils',
+    packages=['keboola_notebook_utils'],
+    package_dir={'keboola_notebook_utils': ''},
     requires=['pip']
 )
