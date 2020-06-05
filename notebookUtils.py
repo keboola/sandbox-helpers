@@ -1,17 +1,10 @@
-from jupyter_core.paths import jupyter_data_dir
 from datetime import datetime
-import subprocess
-import io
 import os
-import errno
-import stat
-import json
+from IPython.lib import passwd
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 import sys
-from notebook.utils import to_api_path
-
 
 
 def retrySession(
@@ -33,6 +26,7 @@ def retrySession(
     session.mount('https://', adapter)
     return session
 
+
 def saveFile(file_path, token, log):
     """
     Construct a requests POST call with args and kwargs and process the
@@ -51,7 +45,7 @@ def saveFile(file_path, token, log):
     else:
         url = 'http://data-loader-api/data-loader-api/save'
     headers = {'X-StorageApi-Token': token, 'User-Agent': 'Keboola Sandbox Autosave Request'}
-    payload = {'file':{'source': file_path, 'tags': ['autosave']}}
+    payload = {'file': {'source': file_path, 'tags': ['autosave']}}
 
     # the timeout is set to > 3min because of the delay on 400 level exception responses
     # https://keboola.atlassian.net/browse/PS-186
@@ -65,15 +59,17 @@ def saveFile(file_path, token, log):
     else:
         return r.json()
 
+
 def updateApi(token):
     """
     Update autosave timestamp in Sandboxes API
     """
 
-    headers = { 'X-StorageApi-Token': token, 'User-Agent': 'Keboola Sandbox Autosave Request' }
+    headers = {'X-StorageApi-Token': token, 'User-Agent': 'Keboola Sandbox Autosave Request'}
     url = os.environ['SANDBOXES_API_URL'] + '/sandboxes/' + os.environ['SANDBOX_ID']
-    json = { 'lastAutosaveTimestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f') }
-    retrySession().put(url, json, headers)
+    json = {'lastAutosaveTimestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')}
+    retrySession().put(url, json, headers=headers)
+
 
 def scriptPostSave(model, os_path, contents_manager, **kwargs):
     """
@@ -100,6 +96,7 @@ def scriptPostSave(model, os_path, contents_manager, **kwargs):
     log.info("Successfully saved the notebook to Keboola Connection")
     updateApi(token)
 
+
 def notebookSetup(c):
     # c is Jupyter config http://jupyter-notebook.readthedocs.io/en/latest/config.html
     print("Initializing Jupyter.", file=sys.stderr)
@@ -118,7 +115,6 @@ def notebookSetup(c):
 
     # Set a password
     if 'PASSWORD' in os.environ and os.environ['PASSWORD']:
-        from IPython.lib import passwd
         c.NotebookApp.password = passwd(os.environ['PASSWORD'])
         del os.environ['PASSWORD']
     else:
