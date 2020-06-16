@@ -45,7 +45,7 @@ def saveFile(file_path, token, log):
     else:
         url = 'http://data-loader-api/data-loader-api/save'
     headers = {'X-StorageApi-Token': token, 'User-Agent': 'Keboola Sandbox Autosave Request'}
-    payload = {'file': {'source': file_path, 'tags': ['autosave']}}
+    payload = {'file': {'source': file_path, 'tags': ['autosave', 'sandbox-' + os.environ['SANDBOX_ID']]}}
 
     # the timeout is set to > 3min because of the delay on 400 level exception responses
     # https://keboola.atlassian.net/browse/PS-186
