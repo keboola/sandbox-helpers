@@ -1,11 +1,11 @@
 from datetime import datetime
+import json
 import os
+import sys
 from IPython.lib import passwd
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
-import sys
-
 
 def retrySession(
     retries=3,
@@ -60,15 +60,21 @@ def saveFile(file_path, token, log):
         return r.json()
 
 
-def updateApi(token):
+def updateApi(token, log):
     """
     Update autosave timestamp in Sandboxes API
     """
 
-    headers = {'X-StorageApi-Token': token, 'User-Agent': 'Keboola Sandbox Autosave Request'}
+    headers = {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Keboola Sandbox Autosave Request',
+        'X-StorageApi-Token': token,
+    }
     url = os.environ['SANDBOXES_API_URL'] + '/sandboxes/' + os.environ['SANDBOX_ID']
-    json = {'lastAutosaveTimestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')}
-    retrySession().put(url, json, headers=headers)
+    body = json.dumps({'lastAutosaveTimestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')})
+    result = retrySession().put(url, data=body, headers=headers)
+    if result.status_code != requests.codes.ok:
+        log.error("Saving autosave to Sandboxes API errored: " + result.text)
 
 
 def scriptPostSave(model, os_path, contents_manager, **kwargs):
@@ -94,7 +100,7 @@ def scriptPostSave(model, os_path, contents_manager, **kwargs):
         raise
 
     log.info("Successfully saved the notebook to Keboola Connection")
-    updateApi(token)
+    updateApi(token, log)
 
 
 def notebookSetup(c):
