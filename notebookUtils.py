@@ -73,8 +73,10 @@ def updateApi(token, log):
     url = os.environ['SANDBOXES_API_URL'] + '/sandboxes/' + os.environ['SANDBOX_ID']
     body = json.dumps({'lastAutosaveTimestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')})
     result = retrySession().put(url, data=body, headers=headers)
-    if result.status_code != requests.codes.ok:
-        log.error("Saving autosave to Sandboxes API errored: " + result.text)
+    if result.status_code == requests.codes.ok:
+        log.info('Successfully saved autosave to Sandboxes API')
+    else:
+        log.error('Saving autosave to Sandboxes API errored: ' + result.text)
 
 
 def scriptPostSave(model, os_path, contents_manager, **kwargs):
