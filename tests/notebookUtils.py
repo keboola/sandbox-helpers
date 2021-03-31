@@ -106,3 +106,4 @@ class TestNotebookUtils():
             assert 'tags' in response['file']
             assert 'autosave' in response['file']['tags']
             assert 'sandbox-123' in response['file']['tags']
+            assert 'git' in response['file']['tags']

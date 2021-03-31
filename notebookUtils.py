@@ -36,7 +36,7 @@ def retrySession(
     return session
 
 
-def saveFile(file_path, sandbox_id, token, log):
+def saveFile(file_path, sandbox_id, token, log, tags=None):
     """
     Construct a requests POST call with args and kwargs and process the
     results.
@@ -45,18 +45,21 @@ def saveFile(file_path, sandbox_id, token, log):
         sandbox_id: Id of the sandbox
         token: Keboola Storage token
         log: Logger instance
+        tags: Additional tags for the file
     Returns:
         body: Response body parsed from json.
     Raises:
         requests.HTTPError: If the API request fails.
     """
 
+    if tags is None:
+        tags = []
     if 'DATA_LOADER_API_URL' in os.environ and os.environ['DATA_LOADER_API_URL']:
         url = 'http://' + os.environ['DATA_LOADER_API_URL'] + '/data-loader-api/save'
     else:
         url = 'http://data-loader-api/data-loader-api/save'
     headers = {'X-StorageApi-Token': token, 'User-Agent': 'Keboola Sandbox Autosave Request'}
-    payload = {'file': {'source': file_path, 'tags': ['autosave', 'sandbox-' + sandbox_id]}}
+    payload = {'file': {'source': file_path, 'tags': ['autosave', 'sandbox-' + sandbox_id] + tags}}
 
     # the timeout is set to > 3min because of the delay on 400 level exception responses
     # https://keboola.atlassian.net/browse/PS-186
@@ -142,7 +145,7 @@ def saveFolder(folder_path, sandbox_id, token, log):
             log.error('Git folder was not gzipped')
         else:
             try:
-                response = saveFile(gz_path, sandbox_id, token, log)
+                response = saveFile(gz_path, sandbox_id, token, log, ['git'])
                 log.info('Successfully saved git folder to Keboola Storage')
             except requests.HTTPError:
                 log.error('Error saving gzipped git folder:' + response.json())
