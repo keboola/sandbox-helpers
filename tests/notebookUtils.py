@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 import pytest
 import random
 import requests_mock
@@ -10,6 +11,8 @@ import tempfile
 from notebookUtils import getStorageTokenFromEnv, notebookSetup, saveFolder, saveNotebook, scriptPostSave, \
     updateApiTimestamp
 
+def generate_random_string():
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
 
 class TestNotebookUtils():
 
@@ -58,7 +61,7 @@ class TestNotebookUtils():
             getStorageTokenFromEnv(logging)
 
     def test_getStorageTokenFromEnvOk(self):
-        token = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+        token = generate_random_string()
         os.environ['KBC_TOKEN'] = token
         assert getStorageTokenFromEnv(logging) == token
 
@@ -92,18 +95,24 @@ class TestNotebookUtils():
             os.environ['DATA_LOADER_API_URL'] = 'dataloader'
             dataLoaderMock = m.post('http://dataloader/data-loader-api/save', json={'result': 'ok'})
 
-            folder = tempfile.mkdtemp()
-            f = open(folder + '/file.txt', 'a')
+            folder_prepare = tempfile.mkdtemp()
+            folder_name = Path(folder_prepare).name
+            f = open(folder_prepare + '/file.txt', 'a')
             f.write('content')
             f.close()
-            saveFolder(folder, '123', 'token', logging)
+            saveFolder(folder_prepare, '123', 'token', logging)
 
             assert dataLoaderMock.call_count == 1
             response = json.loads(dataLoaderMock.last_request.text)
             assert 'file' in response
             assert 'source' in response['file']
-            assert response['file']['source'] == '/tmp/git_backup.tar.gz'
             assert 'tags' in response['file']
             assert 'autosave' in response['file']['tags']
             assert 'sandbox-123' in response['file']['tags']
             assert 'git' in response['file']['tags']
+
+            gzip_file = response['file']['source']
+            folder_result = tempfile.mkdtemp()
+            os.system(f'tar xzf {gzip_file} -C {folder_result}')
+            assert folder_name in os.listdir(f'{folder_result}')
+            assert 'file.txt' in os.listdir(f'{folder_result}/{folder_name}')

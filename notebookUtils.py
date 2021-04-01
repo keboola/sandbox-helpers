@@ -3,9 +3,11 @@ import json
 import os
 import sys
 from IPython.lib import passwd
+from pathlib import Path
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+import tempfile
 
 
 def retrySession(
@@ -107,8 +109,8 @@ def getStorageTokenFromEnv(log):
     if 'KBC_TOKEN' in os.environ:
         return os.environ['KBC_TOKEN']
     else:
-        log.error('Could not find the Keboola Storage API token.')
-        raise Exception('Could not find the Keboola Storage API token.')
+        log.error('Could not find Keboola Storage API token.')
+        raise Exception('Could not find Keboola Storage API token.')
 
 
 def saveNotebook(file, sandbox_id, token, log):
@@ -120,12 +122,17 @@ def saveNotebook(file, sandbox_id, token, log):
         token: Keboola Storage token
         log: Logger instance
     """
+    response = None
     try:
         log.info('Attempting to save the file to storage')
         response = saveFile(os.path.relpath(file), sandbox_id, token, log)
         log.info('Successfully saved the notebook to Keboola Storage')
-    except requests.HTTPError:
-        log.error('Error saving notebook:' + response.json())
+    except requests.HTTPError as err:
+        message = 'Error saving notebook.'
+        if response:
+            message += ' ' + response.json()
+        message += ' {0}'.format(err)
+        log.error(message)
         raise
 
 
@@ -138,17 +145,23 @@ def saveFolder(folder_path, sandbox_id, token, log):
         token: Keboola Storage token
         log: Logger instance
     """
-    gz_path = '/tmp/git_backup.tar.gz'
+    gz_path = f'{tempfile.mkdtemp()}/git_backup.tar.gz'
     if os.path.exists(folder_path):
-        os.system('tar -zcvf ' + gz_path + ' ' + folder_path)
+        parent_folder_path = Path(folder_path).parent.absolute()
+        os.system(f'cd {parent_folder_path};tar -zcf {gz_path} {Path(folder_path).name}')
         if not os.path.exists(gz_path):
             log.error('Git folder was not gzipped')
         else:
+            response = None
             try:
-                response = saveFile(gz_path, sandbox_id, token, log, ['git'])
+                response = saveFile(os.path.relpath(gz_path), sandbox_id, token, log, ['git'])
                 log.info('Successfully saved git folder to Keboola Storage')
-            except requests.HTTPError:
-                log.error('Error saving gzipped git folder:' + response.json())
+            except requests.HTTPError as err:
+                message = 'Error saving gzipped git folder.'
+                if response:
+                    message += ' ' + response.json()
+                message += ' {0}'.format(err)
+                log.error(message)
                 raise
 
 
