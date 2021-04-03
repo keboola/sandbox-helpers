@@ -62,7 +62,7 @@ def saveFile(file_path, sandbox_id, token, log, tags=None):
     else:
         url = 'http://data-loader-api/data-loader-api/save'
     headers = {'X-StorageApi-Token': token, 'User-Agent': 'Keboola Sandbox Autosave Request'}
-    payload = {'file': {'source': file_path, 'tags': ['autosave', 'sandbox-' + sandbox_id] + tags}}
+    payload = {'file': {'source': os.path.relpath(file_path), 'tags': ['autosave', 'sandbox-' + sandbox_id] + tags}}
 
     # the timeout is set to > 3min because of the delay on 400 level exception responses
     # https://keboola.atlassian.net/browse/PS-186
@@ -138,7 +138,7 @@ def saveFolder(folder_path, sandbox_id, token, log):
     if os.path.exists(folder_path):
         gz_path = compressFolder(folder_path)
         try:
-            saveFile(os.path.relpath(gz_path), sandbox_id, token, log, ['git'])
+            saveFile(gz_path, sandbox_id, token, log, ['git'])
         finally:
             if os.path.exists(gz_path):
                 os.remove(gz_path)
