@@ -1,15 +1,14 @@
 import json
 import logging
 import os
-from pathlib import Path
 import pytest
 import random
 import requests_mock
 import string
 import tempfile
 
-from notebookUtils import getStorageTokenFromEnv, notebookSetup, saveFolder, saveNotebook, scriptPostSave, \
-    updateApiTimestamp
+from notebookUtils import compressFolder, getStorageTokenFromEnv, notebookSetup, saveFile, saveFolder, \
+    scriptPostSave, updateApiTimestamp
 
 def generate_random_string():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
@@ -75,12 +74,12 @@ class TestNotebookUtils():
             assert apiMock.call_count == 1
             assert 'lastAutosaveTimestamp' in apiMock.last_request.text
 
-    def test_saveNotebook(self):
+    def test_saveFile(self):
         with requests_mock.Mocker() as m:
             os.environ['DATA_LOADER_API_URL'] = 'dataloader'
             dataLoaderMock = m.post('http://dataloader/data-loader-api/save', json={'result': 'ok'})
 
-            saveNotebook('/file/path', '123', 'token', logging)
+            saveFile('/file/path', '123', 'token', logging)
 
             assert dataLoaderMock.call_count == 1
             response = json.loads(dataLoaderMock.last_request.text)
@@ -90,13 +89,26 @@ class TestNotebookUtils():
             assert 'autosave' in response['file']['tags']
             assert 'sandbox-123' in response['file']['tags']
 
+    def test_compressFolder(self):
+        folder_prepare = tempfile.mkdtemp() + '/.git'
+        os.mkdir(folder_prepare)
+        f = open(folder_prepare + '/file.txt', 'a')
+        f.write('content')
+        f.close()
+
+        gzip_file = compressFolder(folder_prepare)
+        folder_result = tempfile.mkdtemp()
+        os.system(f'tar xzf {gzip_file} -C {folder_result}')
+        assert '.git' in os.listdir(folder_result)
+        assert 'file.txt' in os.listdir(f'{folder_result}/.git')
+
     def test_saveFolder(self):
         with requests_mock.Mocker() as m:
             os.environ['DATA_LOADER_API_URL'] = 'dataloader'
             dataLoaderMock = m.post('http://dataloader/data-loader-api/save', json={'result': 'ok'})
 
-            folder_prepare = tempfile.mkdtemp()
-            folder_name = Path(folder_prepare).name
+            folder_prepare = tempfile.mkdtemp() + '/.git'
+            os.mkdir(folder_prepare)
             f = open(folder_prepare + '/file.txt', 'a')
             f.write('content')
             f.close()
@@ -111,8 +123,4 @@ class TestNotebookUtils():
             assert 'sandbox-123' in response['file']['tags']
             assert 'git' in response['file']['tags']
 
-            gzip_file = response['file']['source']
-            folder_result = tempfile.mkdtemp()
-            os.system(f'tar xzf {gzip_file} -C {folder_result}')
-            assert folder_name in os.listdir(f'{folder_result}')
-            assert 'file.txt' in os.listdir(f'{folder_result}/{folder_name}')
+
