@@ -85,6 +85,7 @@ class TestNotebookUtils():
             response = json.loads(dataLoaderMock.last_request.text)
             assert 'file' in response
             assert 'source' in response['file']
+            assert response['file']['source'].startswith('../')
             assert 'tags' in response['file']
             assert 'autosave' in response['file']['tags']
             assert 'sandbox-123' in response['file']['tags']
@@ -118,6 +119,7 @@ class TestNotebookUtils():
             response = json.loads(dataLoaderMock.last_request.text)
             assert 'file' in response
             assert 'source' in response['file']
+            assert response['file']['source'].startswith('../')
             assert 'tags' in response['file']
             assert 'autosave' in response['file']['tags']
             assert 'sandbox-123' in response['file']['tags']
