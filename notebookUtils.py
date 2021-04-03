@@ -54,6 +54,7 @@ def saveFile(file_path, sandbox_id, token, log, tags=None):
         requests.HTTPError: If the API request fails.
     """
 
+    log.info(f'Attempting to save file {file_path} to Storage')
     if tags is None:
         tags = []
     if 'DATA_LOADER_API_URL' in os.environ and os.environ['DATA_LOADER_API_URL']:
@@ -68,12 +69,10 @@ def saveFile(file_path, sandbox_id, token, log, tags=None):
     try:
         r = retrySession().post(url, json=payload, headers=headers, timeout=240)
         r.raise_for_status()
+        log.info(f'Successfully saved file {file_path} to Storage')
     except Exception as e:
-        # Handle different error codes
-        log.exception('Debugging the error')
+        log.exception(f'Saving file {file_path} to Storage failed')
         raise e
-    else:
-        return r.json()
 
 
 def updateApiTimestamp(sandbox_id, token, log):
@@ -113,27 +112,18 @@ def getStorageTokenFromEnv(log):
         raise Exception('Could not find Keboola Storage API token.')
 
 
-def saveNotebook(file, sandbox_id, token, log):
+def compressFolder(folder_path):
     """
-    Save notebook file to Keboola Storage
+    Gzip folder
     Args:
-        file: Path to the notebook file
-        sandbox_id: Id of the sandbox
-        token: Keboola Storage token
-        log: Logger instance
+        folder_path: Path to the folder
     """
-    response = None
-    try:
-        log.info('Attempting to save the file to storage')
-        response = saveFile(os.path.relpath(file), sandbox_id, token, log)
-        log.info('Successfully saved the notebook to Keboola Storage')
-    except requests.HTTPError as err:
-        message = 'Error saving notebook.'
-        if response:
-            message += ' ' + response.json()
-        message += ' {0}'.format(err)
-        log.error(message)
-        raise
+    parent_folder_path = Path(folder_path).parent.absolute()
+    gz_path = f'{parent_folder_path}/git_backup.tar.gz'
+    os.system(f'cd {parent_folder_path};tar -zcf {gz_path} {Path(folder_path).name}')
+    if not os.path.exists(gz_path):
+        raise Exception(f'Git folder {parent_folder_path} was not gzipped to {gz_path}')
+    return gz_path
 
 
 def saveFolder(folder_path, sandbox_id, token, log):
@@ -145,24 +135,13 @@ def saveFolder(folder_path, sandbox_id, token, log):
         token: Keboola Storage token
         log: Logger instance
     """
-    gz_path = f'{tempfile.mkdtemp()}/git_backup.tar.gz'
     if os.path.exists(folder_path):
-        parent_folder_path = Path(folder_path).parent.absolute()
-        os.system(f'cd {parent_folder_path};tar -zcf {gz_path} {Path(folder_path).name}')
-        if not os.path.exists(gz_path):
-            log.error('Git folder was not gzipped')
-        else:
-            response = None
-            try:
-                response = saveFile(os.path.relpath(gz_path), sandbox_id, token, log, ['git'])
-                log.info('Successfully saved git folder to Keboola Storage')
-            except requests.HTTPError as err:
-                message = 'Error saving gzipped git folder.'
-                if response:
-                    message += ' ' + response.json()
-                message += ' {0}'.format(err)
-                log.error(message)
-                raise
+        gz_path = compressFolder(folder_path)
+        try:
+            saveFile(os.path.relpath(gz_path), sandbox_id, token, log, ['git'])
+        finally:
+            if os.path.exists(gz_path):
+                os.remove(gz_path)
 
 
 def scriptPostSave(model, os_path, contents_manager, **kwargs):
@@ -178,7 +157,7 @@ def scriptPostSave(model, os_path, contents_manager, **kwargs):
 
     sandbox_id = os.environ['SANDBOX_ID']
     token = getStorageTokenFromEnv(log)
-    saveNotebook(os_path, sandbox_id, token, log)
+    saveFile(os_path, sandbox_id, token, log)
     updateApiTimestamp(sandbox_id, token, log)
     saveFolder('/data/.git', sandbox_id, token, log)
 
