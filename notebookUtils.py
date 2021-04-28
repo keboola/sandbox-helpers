@@ -91,7 +91,7 @@ def updateApiTimestamp(sandbox_id, token, log):
     }
     url = os.environ['SANDBOXES_API_URL'] + '/sandboxes/' + sandbox_id
     body = json.dumps({'lastAutosaveTimestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')})
-    result = retrySession().put(url, data=body, headers=headers)
+    result = retrySession().patch(url, data=body, headers=headers)
     if result.status_code == requests.codes.ok:
         log.info('Successfully saved autosave to Sandboxes API')
     else:

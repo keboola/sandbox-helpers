@@ -41,7 +41,7 @@ class TestNotebookUtils():
             os.environ['DATA_LOADER_API_URL'] = 'dataloader'
             os.environ['KBC_TOKEN'] = 'token'
             dataLoaderMock = m.post('http://dataloader/data-loader-api/save', json={'result': 'ok'})
-            apiMock = m.put('http://sandboxes-api/sandboxes/123', json={'result': 'ok'})
+            apiMock = m.patch('http://sandboxes-api/sandboxes/123', json={'result': 'ok'})
 
             contentsManager = type('', (), {})()
             contentsManager.log = logging
@@ -67,7 +67,7 @@ class TestNotebookUtils():
     def test_updateApiTimestamp(self):
         with requests_mock.Mocker() as m:
             os.environ['SANDBOXES_API_URL'] = 'http://sandboxes-api'
-            apiMock = m.put('http://sandboxes-api/sandboxes/123', json={'result': 'ok'})
+            apiMock = m.patch('http://sandboxes-api/sandboxes/123', json={'result': 'ok'})
 
             updateApiTimestamp('123', 'token', logging)
 
