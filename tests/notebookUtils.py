@@ -20,18 +20,18 @@ class TestNotebookUtils():
         os.environ['HOSTNAME'] = 'host'
         os.environ['ROOT_DIR'] = '/data'
         c = type('', (), {})()
-        c.NotebookApp = type('', (), {})()
+        c.ServerApp = type('', (), {})()
         c.Session = type('', (), {})()
         c.FileContentsManager = type('', (), {})()
 
         notebookSetup(c)
 
-        assert c.NotebookApp.ip == 'host'
-        assert c.NotebookApp.port == 8888
-        assert c.NotebookApp.notebook_dir == '/data/'
-        assert c.NotebookApp.allow_root is True
-        assert c.NotebookApp.password
-        assert c.NotebookApp.base_url == '/data'
+        assert c.ServerApp.ip == 'host'
+        assert c.ServerApp.port == 8888
+        assert c.ServerApp.notebook_dir == '/data/'
+        assert c.ServerApp.allow_root is True
+        assert c.ServerApp.password
+        assert c.ServerApp.base_url == '/data'
         assert c.FileContentsManager.post_save_hook
 
     def test_scriptPostSave(self):
@@ -124,5 +124,3 @@ class TestNotebookUtils():
             assert 'autosave' in response['file']['tags']
             assert 'sandbox-123' in response['file']['tags']
             assert 'git' in response['file']['tags']
-
-
