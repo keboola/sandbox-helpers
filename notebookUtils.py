@@ -167,26 +167,26 @@ def notebookSetup(c):
     print('Initializing Jupyter.', file=sys.stderr)
 
     if 'HOSTNAME' in os.environ:
-        c.NotebookApp.ip = os.environ['HOSTNAME']
+        c.ServerApp.ip = os.environ['HOSTNAME']
     else:
-        c.NotebookApp.ip = '*'
-    c.NotebookApp.port = 8888
-    c.NotebookApp.open_browser = False
+        c.ServerApp.ip = '*'
+    c.ServerApp.port = 8888
+    c.ServerApp.open_browser = False
     # This changes current working dir, so has to be set to /data/
-    c.NotebookApp.notebook_dir = '/data/'
+    c.ServerApp.notebook_dir = '/data/'
     c.Session.debug = False
     # If not set, there is a permission problem with the /data/ directory
-    c.NotebookApp.allow_root = True
+    c.ServerApp.allow_root = True
 
     # Set a password
     if 'PASSWORD' in os.environ and os.environ['PASSWORD']:
-        c.NotebookApp.password = passwd(os.environ['PASSWORD'])
+        c.ServerApp.password = passwd(os.environ['PASSWORD'])
         del os.environ['PASSWORD']
     else:
         print('Password must be provided.')
         sys.exit(150)
 
     if 'ROOT_DIR' in os.environ and os.environ['ROOT_DIR']:
-        c.NotebookApp.base_url = os.environ['ROOT_DIR']
+        c.ServerApp.base_url = os.environ['ROOT_DIR']
 
     c.FileContentsManager.post_save_hook = scriptPostSave
