@@ -28,7 +28,7 @@ class TestNotebookUtils():
 
         assert c.ServerApp.ip == 'host'
         assert c.ServerApp.port == 8888
-        assert c.ServerApp.notebook_dir == '/data/'
+        assert c.ServerApp.root_dir == '/data/'
         assert c.ServerApp.allow_root is True
         assert c.ServerApp.password
         assert c.ServerApp.base_url == '/data'

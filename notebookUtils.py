@@ -173,7 +173,7 @@ def notebookSetup(c):
     c.ServerApp.port = 8888
     c.ServerApp.open_browser = False
     # This changes current working dir, so has to be set to /data/
-    c.ServerApp.notebook_dir = '/data/'
+    c.ServerApp.root_dir = '/data/'
     c.Session.debug = False
     # If not set, there is a permission problem with the /data/ directory
     c.ServerApp.allow_root = True
