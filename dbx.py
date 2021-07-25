@@ -3,14 +3,16 @@ from pyspark.dbutils import DBUtils
 
 MANIFEST_FILE_EXT = 'file_list'
 
-def export_parquet(parquet_path):
+def export_parquet(parquet_path, spark):
+    dbutils = DBUtils(spark)
     file_list = deep_ls(parquet_path, 10)
     manifest = ''
     for file in file_list:
         manifest += file.path + '\n'
     dbutils.fs.put(parquet_path + '.' + MANIFEST_FILE_EXT, manifest, True)
 
-def get_dataframe_from_parquet(parquet_path, destination):
+def get_dataframe_from_parquet(parquet_path, destination, spark):
+    dbutils = DBUtils(spark)
     files = dbutils.fs.ls(parquet_path + '.file_list')
     for file in files:
         # since its input it has the file and a manifest, we only want the file
