@@ -5,7 +5,7 @@ MANIFEST_FILE_EXT = 'file_list'
 
 def export_parquet(parquet_path, spark):
     dbutils = DBUtils(spark)
-    file_list = deep_ls(dbutils, parquet_path, 10)
+    file_list = get_dir_content(dbutils, parquet_path)
     manifest = ''
     for file in file_list:
         manifest += file.path + '\n'
@@ -53,73 +53,8 @@ def file_exists(dbutils, path):
       raise
 
 
-def deep_ls(dbutils, path: str, max_depth=1, reverse=False, key=None, keep_hidden=False):
-    """List all files in base path recursively.
-    List all files and folders in specified path and subfolders within maximum recursion depth.
-    Parameters
-    ----------
-    path : str
-        The path of the folder from which files are listed
-    max_depth : int
-        The maximum recursion depth
-    reverse : bool
-        As used in `sorted([1, 2], reverse=True)`
-    key : Callable
-        As used in `sorted(['aa', 'aaa'], key=len)`
-    keep_hidden : bool
-        Keep files and folders starting with '_' or '.'
-    Examples
-    --------
-    >>> from pprint import pprint
-    >>> files = list(deep_ls(dbutils, '/databricks-datasets/asa/airlines'))
-    >>> pprint(files) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    [FileInfo(path='dbfs:/databricks-datasets/asa/airlines/1987.csv', name='1987.csv', size=127162942),
-     ...
-     FileInfo(path='dbfs:/databricks-datasets/asa/airlines/2008.csv', name='2008.csv', size=689413344)]
-    >>> first, *_, last = files
-    >>> first
-    FileInfo(path='dbfs:/databricks-datasets/asa/airlines/1987.csv', name='1987.csv', size=127162942)
-    >>> last
-    FileInfo(path='dbfs:/databricks-datasets/asa/airlines/2008.csv', name='2008.csv', size=689413344)
-    """
-
-    # Hidden files may be filtered out
-    condition = None if keep_hidden else lambda x: x.name[0] not in ('_', '.')
-
-    # List all files in path and apply sorting rules
-    li = sorted(filter(condition, dbutils.fs.ls(path)),
-                reverse=reverse, key=key)
-
-    # Return all files (not ending with '/')
-    for x in li:
-        if x.path[-1] != '/' and len(x.path) > 1:
-            yield x
-
-    # If the max_depth has not been reached, start
-    # listing files and folders in subdirectories
-    if max_depth > 1:
-        for x in li:
-            if x.path[-1] != '/':
-                continue
-            for y in deep_ls(dbutils, x.path, max_depth - 1, reverse, key, keep_hidden):
-                yield y
-
-    # If max_depth has been reached,
-    # return the folders
-    else:
-        for x in li:
-            if x.path[-1] == '/':
-                yield x
-
-
-def key(val):
-    """Sort function.
-    Takes a filepath:
-      '/mnt/raw/store/item/year=2019/month=6/day=4/'
-    Extracts the integer 4 or returns -1
-    """
-    try:
-        return int(list(filter(bool, val.path.split('/'))).pop().split('=').pop())
-    except ValueError as e:
-        return -1
-
+def get_dir_content(dbutils, ls_path):
+  dir_paths = dbutils.fs.ls(ls_path)
+  subdir_paths = [get_dir_content(p.path) for p in dir_paths if p.isDir() and p.path != ls_path]
+  flat_subdir_paths = [p for subdir in subdir_paths for p in subdir]
+  return list(map(lambda p: p.path, dir_paths)) + flat_subdir_paths
