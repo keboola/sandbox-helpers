@@ -52,9 +52,8 @@ def file_exists(dbutils, path):
     else:
       raise
 
-
 def get_dir_content(dbutils, ls_path):
   dir_paths = dbutils.fs.ls(ls_path)
-  subdir_paths = [get_dir_content(p.path) for p in dir_paths if p.isDir() and p.path != ls_path]
+  subdir_paths = [get_dir_content(dbutils, p.path) for p in dir_paths if p.isDir() and p.path != ls_path]
   flat_subdir_paths = [p for subdir in subdir_paths for p in subdir]
   return list(map(lambda p: p.path, dir_paths)) + flat_subdir_paths
