@@ -31,7 +31,7 @@ def get_dataframe_from_parquet(parquet_path, destination, spark):
             if i < (len(path_parts) - 1):
                 new_rel_path = os.path.join(part, new_rel_path)
         copy_dir = os.path.join(destination, new_rel_path.replace('-', '_'))
-        if not file_exists(copy_dir):
+        if not file_exists(dbutils, copy_dir):
             dbutils.fs.mkdirs(copy_dir)
         # now get the files to put there from our input
         input_part_path = os.path.join(parquet_path, '../', part_file.replace('-', '_'))
