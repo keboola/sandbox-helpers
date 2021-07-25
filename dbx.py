@@ -13,7 +13,7 @@ def export_parquet(parquet_path, spark):
 
 def get_dataframe_from_parquet(parquet_path, destination, spark):
     dbutils = DBUtils(spark)
-    files = dbutils.fs.ls(parquet_path + '.file_list')
+    files = dbutils.fs.ls(parquet_path + '.' + MANIFEST_FILE_EXT)
     for file in files:
         # since its input it has the file and a manifest, we only want the file
         if not file.name.endswith('.manifest'):
