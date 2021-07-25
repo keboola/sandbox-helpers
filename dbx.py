@@ -5,7 +5,7 @@ MANIFEST_FILE_EXT = 'file_list'
 
 def export_parquet(parquet_path, spark):
     dbutils = DBUtils(spark)
-    file_list = deep_ls(parquet_path, 10)
+    file_list = deep_ls(dbutils, parquet_path, 10)
     manifest = ''
     for file in file_list:
         manifest += file.path + '\n'
@@ -42,7 +42,7 @@ def get_dataframe_from_parquet(parquet_path, destination, spark):
     df = spark.read.parquet(destination)
     return df
 
-def file_exists(path):
+def file_exists(dbutils, path):
   try:
     dbutils.fs.ls(path)
     return True
@@ -53,7 +53,7 @@ def file_exists(path):
       raise
 
 
-def deep_ls(path: str, max_depth=1, reverse=False, key=None, keep_hidden=False):
+def deep_ls(dbutils, path: str, max_depth=1, reverse=False, key=None, keep_hidden=False):
     """List all files in base path recursively.
     List all files and folders in specified path and subfolders within maximum recursion depth.
     Parameters
@@ -71,7 +71,7 @@ def deep_ls(path: str, max_depth=1, reverse=False, key=None, keep_hidden=False):
     Examples
     --------
     >>> from pprint import pprint
-    >>> files = list(deep_ls('/databricks-datasets/asa/airlines'))
+    >>> files = list(deep_ls(dbutils, '/databricks-datasets/asa/airlines'))
     >>> pprint(files) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     [FileInfo(path='dbfs:/databricks-datasets/asa/airlines/1987.csv', name='1987.csv', size=127162942),
      ...
@@ -101,7 +101,7 @@ def deep_ls(path: str, max_depth=1, reverse=False, key=None, keep_hidden=False):
         for x in li:
             if x.path[-1] != '/':
                 continue
-            for y in deep_ls(x.path, max_depth - 1, reverse, key, keep_hidden):
+            for y in deep_ls(dbutils, x.path, max_depth - 1, reverse, key, keep_hidden):
                 yield y
 
     # If max_depth has been reached,
