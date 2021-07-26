@@ -23,6 +23,7 @@ def get_dataframe_from_parquet(parquet_path, destination, spark):
     for init_file in manifest:
         path_parts = init_file.split('/')
         new_rel_path = ''
+        part_file = None
         for i, part in enumerate(reversed(path_parts)):
             if part == 'files':
                 break
@@ -30,6 +31,8 @@ def get_dataframe_from_parquet(parquet_path, destination, spark):
                 part_file = part
             if i < (len(path_parts) - 1):
                 new_rel_path = os.path.join(part, new_rel_path)
+        if not part_file:
+            continue
         copy_dir = os.path.join(destination, new_rel_path.replace('-', '_'))
         if not file_exists(dbutils, copy_dir):
             dbutils.fs.mkdirs(copy_dir)
