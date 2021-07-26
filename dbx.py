@@ -8,7 +8,7 @@ def export_parquet(parquet_path, spark):
     file_list = get_dir_content(dbutils, parquet_path)
     manifest = ''
     for file in file_list:
-        manifest += file.path + '\n'
+        manifest += file + '\n'
     dbutils.fs.put(parquet_path + '.' + MANIFEST_FILE_EXT, manifest, True)
 
 def get_dataframe_from_parquet(parquet_path, destination, spark):
