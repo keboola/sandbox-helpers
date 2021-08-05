@@ -180,7 +180,7 @@ def notebookSetup(c):
 
     # Set a password
     if 'PASSWORD' in os.environ and os.environ['PASSWORD']:
-        c.ServerApp.password = passwd(os.environ['PASSWORD'])
+        c.ServerApp.token = os.environ['PASSWORD']
         del os.environ['PASSWORD']
     else:
         print('Password must be provided.')
