@@ -16,7 +16,7 @@ def generate_random_string():
 class TestNotebookUtils():
 
     def test_notebookSetup(self):
-        os.environ['PASSWORD'] = 'pass'
+        os.environ['PASSWORD'] = 'token'
         os.environ['HOSTNAME'] = 'host'
         os.environ['ROOT_DIR'] = '/data'
         c = type('', (), {})()
@@ -30,7 +30,8 @@ class TestNotebookUtils():
         assert c.ServerApp.port == 8888
         assert c.ServerApp.root_dir == '/data/'
         assert c.ServerApp.allow_root is True
-        assert c.ServerApp.password
+        assert not c.ServerApp.password
+        assert c.ServerApp.token == 'token'
         assert c.ServerApp.base_url == '/data'
         assert c.FileContentsManager.post_save_hook
 
