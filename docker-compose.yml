@@ -1,0 +1,11 @@
+version: '2'
+services:
+  dbx:
+    build: .
+    image: keboola/dbx-helpers
+    tty: true
+    stdin_open: true
+    command: pytest tests/*
+    entrypoint: /bin/sh -c
+    volumes:
+      - ./:/code/
