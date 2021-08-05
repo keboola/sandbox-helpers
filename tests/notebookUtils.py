@@ -33,7 +33,9 @@ class TestNotebookUtils():
         assert c.ServerApp.token == 'token'
         assert c.ServerApp.base_url == '/data'
         assert c.FileContentsManager.post_save_hook
-        pytest.raises(AttributeError, c.ServerApp.password, *args, **kwargs)
+        with pytest.raises(AttributeError) as attribute_error:
+            assert c.ServerApp.password
+        assert "object has no attribute 'password'" in str(attribute_error.value)
 
     def test_scriptPostSave(self):
         with requests_mock.Mocker() as m:
