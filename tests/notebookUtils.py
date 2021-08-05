@@ -30,10 +30,10 @@ class TestNotebookUtils():
         assert c.ServerApp.port == 8888
         assert c.ServerApp.root_dir == '/data/'
         assert c.ServerApp.allow_root is True
-        assert not c.ServerApp.password
         assert c.ServerApp.token == 'token'
         assert c.ServerApp.base_url == '/data'
         assert c.FileContentsManager.post_save_hook
+        pytest.raises(AttributeError, c.ServerApp.password, *args, **kwargs)
 
     def test_scriptPostSave(self):
         with requests_mock.Mocker() as m:
