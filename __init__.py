@@ -1,1 +1,1 @@
-__all__ = ['notebookUtils']
+__all__ = ['notebookUtils', 'dbx']
