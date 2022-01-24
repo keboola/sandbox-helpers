@@ -43,6 +43,9 @@ class TestNotebookUtils():
             os.environ['SANDBOX_ID'] = '123'
             os.environ['DATA_LOADER_API_URL'] = 'dataloader'
             os.environ['KBC_TOKEN'] = 'token'
+            if 'HAS_PERSISTENT_STORAGE' in os.environ:
+                del os.environ['HAS_PERSISTENT_STORAGE']
+
             dataLoaderMock = m.post('http://dataloader/data-loader-api/save', json={'result': 'ok'})
             apiMock = m.patch('http://sandboxes-api/sandboxes/123', json={'result': 'ok'})
 
@@ -53,6 +56,47 @@ class TestNotebookUtils():
             assert dataLoaderMock.call_count == 1
             assert 'file' in dataLoaderMock.last_request.text
             assert 'tags' in dataLoaderMock.last_request.text
+
+            assert apiMock.call_count == 1
+            assert 'lastAutosaveTimestamp' in apiMock.last_request.text
+
+    def test_scriptPostSave_disabledPersistentStorage(self):
+        with requests_mock.Mocker() as m:
+            os.environ['SANDBOXES_API_URL'] = 'http://sandboxes-api'
+            os.environ['SANDBOX_ID'] = '123'
+            os.environ['DATA_LOADER_API_URL'] = 'dataloader'
+            os.environ['KBC_TOKEN'] = 'token'
+            os.environ['HAS_PERSISTENT_STORAGE'] = '0'
+            dataLoaderMock = m.post('http://dataloader/data-loader-api/save', json={'result': 'ok'})
+            apiMock = m.patch('http://sandboxes-api/sandboxes/123', json={'result': 'ok'})
+
+            contentsManager = type('', (), {})()
+            contentsManager.log = logging
+            scriptPostSave({'type': 'notebook'}, '/path', contentsManager)
+
+            assert dataLoaderMock.call_count == 1
+            assert 'file' in dataLoaderMock.last_request.text
+            assert 'tags' in dataLoaderMock.last_request.text
+
+            assert apiMock.call_count == 1
+            assert 'lastAutosaveTimestamp' in apiMock.last_request.text
+
+
+    def test_scriptPostSave_enabledPersistentStorage(self):
+        with requests_mock.Mocker() as m:
+            os.environ['SANDBOXES_API_URL'] = 'http://sandboxes-api'
+            os.environ['SANDBOX_ID'] = '123'
+            os.environ['DATA_LOADER_API_URL'] = 'dataloader'
+            os.environ['KBC_TOKEN'] = 'token'
+            os.environ['HAS_PERSISTENT_STORAGE'] = '1'
+            dataLoaderMock = m.post('http://dataloader/data-loader-api/save', json={'result': 'ok'})
+            apiMock = m.patch('http://sandboxes-api/sandboxes/123', json={'result': 'ok'})
+
+            contentsManager = type('', (), {})()
+            contentsManager.log = logging
+            scriptPostSave({'type': 'notebook'}, '/path', contentsManager)
+
+            assert dataLoaderMock.call_count == 0
 
             assert apiMock.call_count == 1
             assert 'lastAutosaveTimestamp' in apiMock.last_request.text

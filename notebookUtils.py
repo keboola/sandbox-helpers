@@ -157,9 +157,12 @@ def scriptPostSave(model, os_path, contents_manager, **kwargs):
 
     sandbox_id = os.environ['SANDBOX_ID']
     token = getStorageTokenFromEnv(log)
-    saveFile(os_path, sandbox_id, token, log)
     updateApiTimestamp(sandbox_id, token, log)
-    saveFolder('/data/.git', sandbox_id, token, log)
+
+    has_persistent_storage = os.getenv('HAS_PERSISTENT_STORAGE', 'False').lower() in ('true', '1')
+    if not has_persistent_storage:
+        saveFile(os_path, sandbox_id, token, log)
+        saveFolder('/data/.git', sandbox_id, token, log)
 
 
 def notebookSetup(c):
