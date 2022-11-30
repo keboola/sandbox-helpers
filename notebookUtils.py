@@ -192,3 +192,45 @@ def notebookSetup(c):
         c.ServerApp.base_url = os.environ['ROOT_DIR']
 
     c.FileContentsManager.post_save_hook = scriptPostSave
+
+# Install packages
+def installPackages(transformation):
+    app = transformation.App()
+    if 'PACKAGES' in os.environ:
+        print('Loading packages "' + os.environ['PACKAGES'] + '"', file=sys.stderr)
+        try:
+            packages = json.loads(os.environ['PACKAGES'])
+        except ValueError as err:
+            print('Packages variable is not a JSON array.', file=sys.stderr)
+            sys.exit(152)
+        if isinstance(packages, list):
+            try:
+                app.install_packages(packages, True)
+            except ValueError as err:
+                print('Failed to install packages', err, file=sys.stderr)
+                sys.exit(153)
+        else:
+            print('Packages variable is not an array.', file=sys.stderr)
+
+def loadTags(transformation):
+    app = transformation.App()
+    if 'TAGS' in os.environ:
+        print('Loading tagged files from "' + os.environ['TAGS'] + '"', file=sys.stderr)
+        try:
+            tags = json.loads(os.environ['TAGS'])
+        except ValueError as err:
+            print('Tags variable is not a JSON array.', file=sys.stderr)
+            sys.exit(154)
+        if isinstance(tags, list):
+            # create fake config file
+            try:
+                with open(os.path.join('/data/', 'config.json'), 'w') as config_file:
+                    json.dump({'parameters': []}, config_file)
+                cfg = docker.Config('/data/')
+                app.prepare_tagged_files(cfg, tags)
+                os.remove('/data/config.json')
+            except ValueError as err:
+                print('Failed to prepare files', err, file=sys.stderr)
+                sys.exit(155)
+        else:
+            print('Tags variable is not an array.', file=sys.stderr)
